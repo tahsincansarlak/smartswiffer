@@ -1,0 +1,148 @@
+// Tahsin Can Sarlak
+// Smart Swiffer
+
+int Trig = 10,Echo = 11; // / Trig PWM Echo Normal
+
+int distance,duration; // Read distance and duration to use reading the distance 
+
+char dir = 'r'; // The variable determines which direction the car needs to take
+
+int ms = 350; // amount of time the car will turn in ms
+
+// The speed of the motors. Since the motors are not very accurate,
+// they require different speeds to go straight
+int highb = 150;
+int higha = 175;
+
+// H bridge 
+int motorA1 = 3, motorA2 = 5;  // Pin outs for motor1
+int motorB1 = 6, motorB2 = 9;  // Pin outs for motor2
+
+// Runs once
+void setup() {
+  // put your setup code here, to run once:
+    pinMode(Trig,OUTPUT);  
+    pinMode(Echo,INPUT);
+    
+    // Outputs the Motor Pins for H bridge
+    pinMode(motorA1,OUTPUT);
+    pinMode(motorA2,OUTPUT);
+    pinMode(motorB1,OUTPUT);
+    pinMode(motorB2,OUTPUT);
+}
+
+// Runs in a loop
+void loop() {
+    algorithm();// Makes the car follow the path and breaks if a sensor reads less than a threshold
+}
+
+// The main algorithm function
+void algorithm(){
+    sensor(); // reads the sensor value
+    movement(); // Makes the necessary movements
+    delay(500);
+}
+
+void movement(){
+  // if the sensor reads less than 30 cms 
+  // 1) it stops the car, 
+  // 2) it turns the car to either left or right for 90 degrees
+  // 3) it moves the car forward,
+  // 4) it turns the car 90 degrees either to left or right to match with step 2
+  
+  if (distance < 30){
+    stop_it();
+    delay(ms);
+    if (dir == 'r'){
+      right();
+      delay(ms);
+      forward();
+      delay(ms/5);
+      right();
+      delay(ms);
+    }
+    
+    else if ( dir =='l'){
+      left();
+      delay(ms);
+      forward();
+      delay(ms/5);
+      left();
+      delay(ms);
+    }
+
+    // Changes the direction so that the car keeps going all over the room
+    // rather than making a rectangular path
+    if (dir == 'r'){
+      dir = 'l';
+    }
+    else if (dir == 'l'){
+      dir = 'r';
+    }
+  }
+
+  // If the distance is more than 30 cms, it keeps going forward
+  if (distance > 30){
+    forward();
+  }
+}
+
+// Calls the necessary function to read the distance
+void sensor() {   
+    distance = sensor_reading(Trig,Echo); 
+} 
+
+// This function reads the distance using the sensor
+int sensor_reading(int trig, int echo){
+    digitalWrite(trig, LOW);
+    delayMicroseconds(10);
+    digitalWrite(trig, HIGH);
+    delayMicroseconds(10);
+    digitalWrite(trig, LOW);
+    
+    duration = pulseIn(echo, HIGH);
+    // Calculates the distance and returns it
+    distance = duration* 0.0343;
+    return(distance); 
+}
+
+
+//  Moves the vehicle  front
+void forward(){
+   digitalWrite(motorA1,LOW);
+   analogWrite(motorA2,higha);
+   digitalWrite(motorB1,LOW);
+   analogWrite(motorB2,highb);
+}
+
+// Turns the vehicle to the right
+void right(){
+   analogWrite(motorA1,higha);
+   digitalWrite(motorA2,LOW);
+   digitalWrite(motorB1,LOW);
+   analogWrite(motorB2,highb);
+}
+
+// Turns the vehicle to the left
+void left(){
+   digitalWrite(motorA1,LOW);
+   analogWrite(motorA2,higha);
+   analogWrite(motorB1,highb);
+   digitalWrite(motorB2,LOW);
+}
+
+// Stops moving
+void stop_it(){
+   digitalWrite(motorA1,LOW);
+   digitalWrite(motorA2,LOW);
+   digitalWrite(motorB1,LOW);
+   digitalWrite(motorB2,LOW);
+}
+
+// Makes it go backward
+void backward(){
+   analogWrite(motorA1,higha);
+   digitalWrite(motorA2,LOW);
+   analogWrite(motorB1,highb);
+   digitalWrite(motorB2,LOW); 
+}
